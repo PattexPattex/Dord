@@ -29,6 +29,7 @@ class EventPipeline<out E : GenericEvent>(
 
     inline fun <reified E> EventPipeline<GenericEvent>.eventAs() = event as? E
 
+    @JvmName("eventAsUnit")
     suspend inline fun <reified E> EventPipeline<GenericEvent>.eventAs(crossinline block: suspend (E) -> Unit) {
         eventAs<E, Unit>(block)
     }
