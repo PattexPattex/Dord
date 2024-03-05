@@ -5,9 +5,16 @@ Another Discord bot library, built around JDA with simplicity in mind
 
 ## Download
 
-on jitpack
+```kotlin
+repositories {
+  mavenCentral()
+  maven { url("https://jitpack.io") } // add jitpack as a repository
+}
 
-no need to add JDA as a dependency, it is added automatically
+dependencies {
+  implementation ("com.github.PattexPattex:Dord:$VERSION$") // replace version with a short commit hash
+}
+```
 
 ## Using Dord
 
