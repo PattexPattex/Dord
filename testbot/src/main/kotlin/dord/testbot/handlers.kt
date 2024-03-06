@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.interactions.commands.Command
 fun Dord.setupHandlers() = handlers {
     prefix("foo") {
         slash {
-            event.reply("${option<Int>("bornana")} bornana ${option<String>("bleh")}")
+            event.reply("${option<Int>("bornana")} bornana ${option<String?>("bleh")}")
         }
 
         autocomplete("bleh") {

@@ -10,7 +10,7 @@ fun Dord.setupNewCommands() = commands {
             option<Int>("bornana", "bleh", autocomplete = {
                 event.replyChoices((1..5).map { Command.Choice(it.toString(), it.toLong()) })
             })
-            option<String>("bleh", "bleh", true)
+            option<String?>("bleh", "bleh", true)
         }
     }
 }

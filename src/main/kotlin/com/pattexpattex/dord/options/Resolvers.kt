@@ -79,7 +79,7 @@ object Resolvers {
     internal inline fun <reified T> SlashOptionResolver.Companion.mapTypeToOptionType(): OptionType? {
         val resolver: OptionResolver<*, *>? = resolvers
             .filter { it is SlashOptionResolver<*, *> }
-            .firstOrNull { typeOf<T>().isSubtypeOf(it.resolvedType) }
+            .firstOrNull { typeOf<T>().withNullability(false).isSubtypeOf(it.resolvedType) }
 
         return (resolver as SlashOptionResolver<*, *>?)?.optionType
     }
