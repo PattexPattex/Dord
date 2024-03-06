@@ -1,6 +1,8 @@
 package com.pattexpattex.dord.commands
 
 import com.pattexpattex.dord.BuilderMarker
+import com.pattexpattex.dord.Dord
+import com.pattexpattex.dord.EventHandlerFunction
 import com.pattexpattex.dord.options.Resolvers
 import com.pattexpattex.dord.options.Resolvers.mapTypeToOptionType
 import com.pattexpattex.dord.options.types.SlashOptionResolver
@@ -8,6 +10,7 @@ import dev.minn.jda.ktx.interactions.commands.Subcommand
 import dev.minn.jda.ktx.interactions.commands.SubcommandGroup
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
@@ -24,10 +27,28 @@ import kotlin.reflect.typeOf
 inline fun <reified T> OptionsContainer.option(
     name: String,
     description: String,
-    isAutocomplete: Boolean = false,
+    noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
     builder: OptionBuilder.() -> Unit = {},
 ) {
-    options += OptionBuilder<T>(name, description, isAutocomplete).apply(builder)
+    autocomplete?.let {
+        dord.handlers {
+            prefix(this@option.name) {
+                autocomplete(name, handler = autocomplete)
+            }
+        }
+    }
+
+    options += OptionBuilder<T>(dord, name, description, autocomplete != null).apply(builder)
+}
+
+@BuilderMarker
+inline fun <reified T> OptionsContainer.option(
+    name: String,
+    description: String,
+    isAutocomplete: Boolean,
+    builder: OptionBuilder.() -> Unit = {},
+) {
+    options += OptionBuilder<T>(dord, name, description, isAutocomplete).apply(builder)
 }
 
 @BuilderMarker
@@ -39,9 +60,9 @@ inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
     builder: OptionBuilder.() -> Unit = {}
 ) {
     Resolvers.register(Resolvers.enumResolver(values))
-    options += OptionBuilder<T>(name, description, false).apply(builder).apply {
+    options += OptionBuilder<T>(dord, name, description, false).apply(builder).apply {
         this.isRequired = isRequired
-        addChoices(values.map { ChoiceBuilder(it.name, it.name.lowercase()) })
+        addChoices(values.map { ChoiceBuilder(dord, it.name, it.name.lowercase()) })
     }
 }
 
@@ -51,13 +72,14 @@ inline fun <reified T : GuildChannel?> OptionsContainer.channelOption(
     description: String,
     builder: OptionBuilder.() -> Unit = {},
 ) {
-    options += OptionBuilder<T>(name, description, false).apply(builder).apply {
+    options += OptionBuilder<T>(dord, name, description, false).apply(builder).apply {
         channelTypes += ChannelType.guildTypes().filter { T::class.isSuperclassOf(it.`interface`.kotlin) }
     }
 }
 
 @BuilderMarker
 open class BaseCommandBuilder(
+    override val dord: Dord,
     override var name: String,
     val type: Command.Type,
 ) : NameLocalizationsContainer {
@@ -75,18 +97,19 @@ open class BaseCommandBuilder(
         .setNSFW(isNSFW)
 
     companion object {
-        fun message(name: String) = BaseCommandBuilder(name, Command.Type.MESSAGE)
+        fun message(dord: Dord, name: String) = BaseCommandBuilder(dord, name, Command.Type.MESSAGE)
 
-        fun user(name: String) = BaseCommandBuilder(name, Command.Type.USER)
+        fun user(dord: Dord, name: String) = BaseCommandBuilder(dord, name, Command.Type.USER)
     }
 }
 
 @BuilderMarker
 class SlashCommandBuilder(
+    dord: Dord,
     name: String,
     override var description: String,
 ) :
-    BaseCommandBuilder(name, Command.Type.SLASH),
+    BaseCommandBuilder(dord, name, Command.Type.SLASH),
     OptionsContainer,
     SubcommandsContainer,
     SubcommandGroupsContainer,
@@ -111,6 +134,7 @@ class SlashCommandBuilder(
 
 @BuilderMarker
 class SubcommandBuilder(
+    override val dord: Dord,
     override var name: String,
     override var description: String
 ) : OptionsContainer, LocalizationsContainer {
@@ -126,6 +150,7 @@ class SubcommandBuilder(
 
 @BuilderMarker
 class SubcommandGroupBuilder(
+    override val dord: Dord,
     override var name: String,
     override var description: String,
 ) : SubcommandsContainer, LocalizationsContainer {
@@ -139,15 +164,16 @@ class SubcommandGroupBuilder(
         .addSubcommands(subcommands.map(SubcommandBuilder::build))
 }
 
-inline fun <reified T> OptionBuilder(name: String, description: String, isAutocomplete: Boolean): OptionBuilder {
+inline fun <reified T> OptionBuilder(dord: Dord, name: String, description: String, isAutocomplete: Boolean): OptionBuilder {
     val optionType = SlashOptionResolver.mapTypeToOptionType<T>()
         ?: throw IllegalArgumentException("Cannot map \"${typeOf<T>()}\" to OptionType, please register a resolver")
 
-    return OptionBuilder(name, description, isAutocomplete, !typeOf<T>().isMarkedNullable, optionType)
+    return OptionBuilder(dord, name, description, isAutocomplete, !typeOf<T>().isMarkedNullable, optionType)
 }
 
 @BuilderMarker
 class OptionBuilder @PublishedApi internal constructor(
+    override val dord: Dord,
     override var name: String,
     override var description: String,
     var isAutocomplete: Boolean,
@@ -159,7 +185,7 @@ class OptionBuilder @PublishedApi internal constructor(
     var channelTypes = EnumSet.noneOf(ChannelType::class.java)
     var minValue: Number = OptionData.MIN_NEGATIVE_NUMBER
     var maxValue: Number = OptionData.MAX_POSITIVE_NUMBER
-    var minLength: Int = 0
+    var minLength: Int = 1
     var maxLength: Int = OptionData.MAX_STRING_OPTION_LENGTH
     var choices = mutableListOf<ChoiceBuilder>()
 
@@ -175,17 +201,17 @@ class OptionBuilder @PublishedApi internal constructor(
 
     @BuilderMarker
     fun choice(name: String, value: String, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(name, value).apply(builder)
+        choices += ChoiceBuilder(dord, name, value).apply(builder)
     }
 
     @BuilderMarker
     fun choice(name: String, value: Long, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(name, value).apply(builder)
+        choices += ChoiceBuilder(dord, name, value).apply(builder)
     }
 
     @BuilderMarker
     fun choice(name: String, value: Double, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(name, value).apply(builder)
+        choices += ChoiceBuilder(dord, name, value).apply(builder)
     }
 
     fun addChoices(choices: Collection<ChoiceBuilder>) {
@@ -213,6 +239,7 @@ class OptionBuilder @PublishedApi internal constructor(
 
 @BuilderMarker
 class ChoiceBuilder(
+    override val dord: Dord,
     override var name: String,
     var value: Any,
 ) : NameLocalizationsContainer {

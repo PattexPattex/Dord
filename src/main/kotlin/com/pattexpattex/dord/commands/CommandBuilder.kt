@@ -1,9 +1,10 @@
 package com.pattexpattex.dord.commands
 
 import com.pattexpattex.dord.BuilderMarker
+import com.pattexpattex.dord.Dord
 
 @BuilderMarker
-class CommandBuilder(internal val namePrefix: String = "") {
+class CommandBuilder(private val dord: Dord, internal val namePrefix: String = "") {
     internal val commands = mutableListOf<BaseCommandBuilder>()
 
     private fun compileName(name: String) = "$namePrefix $name".trim().ifEmpty {
@@ -12,23 +13,23 @@ class CommandBuilder(internal val namePrefix: String = "") {
 
     @BuilderMarker
     fun prefix(prefix: String, builder: CommandBuilder.() -> Unit) {
-        val subBuilder = CommandBuilder(prefix).apply(builder)
+        val subBuilder = CommandBuilder(dord, prefix).apply(builder)
         commands += subBuilder.commands
     }
 
     @BuilderMarker
     fun slash(name: String, description: String, builder: SlashCommandBuilder.() -> Unit = {}) {
-        commands += SlashCommandBuilder(compileName(name), description).apply(builder)
+        commands += SlashCommandBuilder(dord, compileName(name), description).apply(builder)
     }
 
     @BuilderMarker
     fun user(name: String, builder: BaseCommandBuilder.() -> Unit = {}) {
-        commands += BaseCommandBuilder.user(compileName(name)).apply(builder)
+        commands += BaseCommandBuilder.user(dord, compileName(name)).apply(builder)
     }
 
     @BuilderMarker
     fun message(name: String, builder: BaseCommandBuilder.() -> Unit = {}) {
-        commands += BaseCommandBuilder.message(compileName(name)).apply(builder)
+        commands += BaseCommandBuilder.message(dord, compileName(name)).apply(builder)
     }
 
     @BuilderMarker

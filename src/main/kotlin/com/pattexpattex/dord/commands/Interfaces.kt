@@ -1,11 +1,17 @@
 package com.pattexpattex.dord.commands
 
 import com.pattexpattex.dord.BuilderMarker
+import com.pattexpattex.dord.Dord
 import net.dv8tion.jda.api.interactions.DiscordLocale
 
+sealed interface DordContainer {
+    val dord: Dord
+}
+
 @BuilderMarker
-sealed interface OptionsContainer {
+sealed interface OptionsContainer : DordContainer {
     var options: MutableList<OptionBuilder>
+    val name: String
 
     fun addOptions(options: Collection<OptionBuilder>) {
         this.options += options
@@ -13,12 +19,13 @@ sealed interface OptionsContainer {
 }
 
 @BuilderMarker
-sealed interface SubcommandsContainer {
+sealed interface SubcommandsContainer : DordContainer {
     var subcommands: MutableList<SubcommandBuilder>
+    val name: String
 
     @BuilderMarker
     fun subcommand(name: String, description: String, builder: SubcommandBuilder.() -> Unit = {}) {
-        subcommands += SubcommandBuilder(name, description).apply(builder)
+        subcommands += SubcommandBuilder(dord, name, description).apply(builder)
     }
 
     fun addSubcommands(subcommands: Collection<SubcommandBuilder>) {
@@ -27,23 +34,24 @@ sealed interface SubcommandsContainer {
 }
 
 @BuilderMarker
-sealed interface SubcommandGroupsContainer {
+sealed interface SubcommandGroupsContainer : DordContainer {
     var subcommandGroups: MutableList<SubcommandGroupBuilder>
+    val name: String
 
     @BuilderMarker
     fun group(name: String, description: String, builder: SubcommandGroupBuilder.() -> Unit) {
-        subcommandGroups += SubcommandGroupBuilder(name, description).apply(builder)
+        subcommandGroups += SubcommandGroupBuilder(dord, name, description).apply(builder)
     }
 }
 
 @BuilderMarker
-sealed interface NameLocalizationsContainer {
+sealed interface NameLocalizationsContainer : DordContainer {
     var nameLocalizations: MutableMap<DiscordLocale, String>
     var name: String
 }
 
 @BuilderMarker
-sealed interface DescriptionLocalizationsContainer {
+sealed interface DescriptionLocalizationsContainer : DordContainer {
     var descriptionLocalizations: MutableMap<DiscordLocale, String>
     var description: String
 }

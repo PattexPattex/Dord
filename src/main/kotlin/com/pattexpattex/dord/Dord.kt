@@ -101,7 +101,7 @@ class Dord internal constructor() : CoroutineEventListener {
 
     @BuilderMarker
     fun commands(builder: CommandBuilder.() -> Unit) {
-        commands += CommandBuilder().apply(builder).commands.map(BaseCommandBuilder::build)
+        commands += CommandBuilder(this).apply(builder).commands.map(BaseCommandBuilder::build)
         commandsForUpdate = true
     }
 
