@@ -10,11 +10,11 @@ sealed interface DordContainer {
 
 @BuilderMarker
 sealed interface OptionsContainer : DordContainer {
-    var options: MutableList<OptionBuilder>
+    var options: MutableList<OptionBuilder<*>>
     val name: String
     val parentName: String
 
-    fun addOptions(options: Collection<OptionBuilder>) {
+    fun addOptions(options: Collection<OptionBuilder<*>>) {
         this.options += options
     }
 }

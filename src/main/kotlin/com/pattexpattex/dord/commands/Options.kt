@@ -9,26 +9,36 @@ import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import kotlin.reflect.full.isSuperclassOf
+import kotlin.reflect.typeOf
 
 @BuilderMarker
 inline fun <reified T> OptionsContainer.option(
     name: String,
     description: String,
     isAutocomplete: Boolean,
-    builder: OptionBuilder.() -> Unit = {},
+    isRequired: Boolean = !typeOf<T>().isMarkedNullable,
+    builder: OptionBuilder<T>.() -> Unit = {},
 ) {
-    options += OptionBuilder<T>(dord, name, description, isAutocomplete).apply(builder)
+    options += OptionBuilder<T>(dord, name, description, isAutocomplete, isRequired).apply(builder)
 }
 
 @BuilderMarker
 inline fun <reified T> OptionsContainer.option(
     name: String,
     description: String,
+    isRequired: Boolean = !typeOf<T>().isMarkedNullable,
     noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
-    builder: OptionBuilder.() -> Unit = {},
+    builder: OptionBuilder<T>.() -> Unit = {},
 ) {
-    registerAutocomplete(this, autocomplete)
-    option<T>(name, description, autocomplete != null, builder)
+    if (autocomplete != null) {
+        dord.handlers {
+            prefix("${this@option.parentName} ${this@option.name}".trim()) {
+                autocomplete(name, handler = autocomplete)
+            }
+        }
+    }
+
+    option<T>(name, description, autocomplete != null, isRequired, builder)
 }
 
 @BuilderMarker
@@ -37,19 +47,13 @@ inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
     description: String,
     isRequired: Boolean = true,
     values: Collection<T> = enumValues<T>().toList(),
-    crossinline builder: OptionBuilder.() -> Unit = {}
+    crossinline builder: OptionBuilder<T>.() -> Unit = {}
 ) {
     Resolvers.register(Resolvers.enumResolver<T>(values))
 
-    val actualBuilder: OptionBuilder.() -> Unit = {
+    option<T>(name, description, isRequired = isRequired) {
         builder()
         choices += values.map { ChoiceBuilder(dord, it.name, it.name.lowercase()) }
-    }
-
-    if (isRequired) {
-        option<T>(name, description, builder = actualBuilder)
-    } else {
-        option<T?>(name, description, builder = actualBuilder)
     }
 }
 
@@ -57,25 +61,10 @@ inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
 inline fun <reified T : GuildChannel?> OptionsContainer.channelOption(
     name: String,
     description: String,
-    builder: OptionBuilder.() -> Unit = {},
+    builder: OptionBuilder<T>.() -> Unit = {},
 ) {
     option<T>(name, description) {
         builder()
         channelTypes += ChannelType.guildTypes().filter { T::class.isSuperclassOf(it.`interface`.kotlin) }
-    }
-}
-
-@PublishedApi
-internal fun registerAutocomplete(
-    container: OptionsContainer,
-    autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>?
-) {
-    if (autocomplete != null) {
-        val parentName = "${container.parentName} ${container.name}".trim()
-        container.dord.handlers {
-            prefix(parentName) {
-                autocomplete(container.name, handler = autocomplete)
-            }
-        }
     }
 }

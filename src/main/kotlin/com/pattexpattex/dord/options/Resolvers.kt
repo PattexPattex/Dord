@@ -8,10 +8,11 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
+import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.CommandInteractionPayload
-import net.dv8tion.jda.api.interactions.commands.OptionType
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
+import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.typeOf
@@ -41,6 +42,22 @@ object Resolvers {
 
     inline fun <reified T : Enum<T>> enumResolver(values: Collection<T> = enumValues<T>().toList()): EnumResolver<T> {
         return EnumResolver(typeOf<T>(), values.toCollection(EnumSet.noneOf(T::class.java)))
+    }
+
+    suspend inline fun <reified T : Any> toChoice(value: T) = toChoice(value, typeOf<T>())
+
+    @PublishedApi
+    internal suspend fun <T : Any> toChoice(value: T, type: KType): Command.Choice {
+        val mapper = resolvers
+            .filter { type.withNullability(false).isSubtypeOf(it.resolvedType) }
+            .filterIsInstance<ChoiceMapper<*, T>>()
+            .firstOrNull()
+
+        if (mapper == null) {
+            throw IllegalArgumentException("Choice mapper for type $type not found")
+        }
+
+        return mapper.toChoice(value)
     }
 
     @PublishedApi

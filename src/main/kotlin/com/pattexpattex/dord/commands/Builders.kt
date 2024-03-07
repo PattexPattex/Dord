@@ -6,6 +6,7 @@ import com.pattexpattex.dord.options.Resolvers
 import com.pattexpattex.dord.options.types.SlashOptionResolver
 import dev.minn.jda.ktx.interactions.commands.Subcommand
 import dev.minn.jda.ktx.interactions.commands.SubcommandGroup
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.Command
@@ -16,6 +17,8 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction
 import java.util.*
+import kotlin.reflect.KType
+import kotlin.reflect.full.withNullability
 import kotlin.reflect.typeOf
 
 @BuilderMarker
@@ -56,7 +59,7 @@ class SlashCommandBuilder(
     SubcommandGroupsContainer,
     DescriptionLocalizationsContainer
 {
-    override var options = mutableListOf<OptionBuilder>()
+    override var options = mutableListOf<OptionBuilder<*>>()
     override var descriptionLocalizations = mutableMapOf<DiscordLocale, String>()
     override var subcommands = mutableListOf<SubcommandBuilder>()
     override var subcommandGroups = mutableListOf<SubcommandGroupBuilder>()
@@ -64,7 +67,7 @@ class SlashCommandBuilder(
 
     override fun build() = Commands.slash(name, description)
         .setDescriptionLocalizations(descriptionLocalizations)
-        .addOptions(options.map(OptionBuilder::build))
+        .addOptions(options.map(OptionBuilder<*>::build))
         .addSubcommands(subcommands.map(SubcommandBuilder::build))
         .addSubcommandGroups(subcommandGroups.map(SubcommandGroupBuilder::build))
         .setLocalizationFunction(localizationFunction)
@@ -81,14 +84,14 @@ class SubcommandBuilder(
     override var name: String,
     override var description: String
 ) : OptionsContainer, LocalizationsContainer {
-    override var options = mutableListOf<OptionBuilder>()
+    override var options = mutableListOf<OptionBuilder<*>>()
     override var nameLocalizations = mutableMapOf<DiscordLocale, String>()
     override var descriptionLocalizations = mutableMapOf<DiscordLocale, String>()
 
     internal fun build() = Subcommand(name, description)
         .setNameLocalizations(nameLocalizations)
         .setDescriptionLocalizations(descriptionLocalizations)
-        .addOptions(options.map(OptionBuilder::build))
+        .addOptions(options.map(OptionBuilder<*>::build))
 }
 
 @BuilderMarker
@@ -108,15 +111,22 @@ class SubcommandGroupBuilder(
         .addSubcommands(subcommands.map(SubcommandBuilder::build))
 }
 
-inline fun <reified T> OptionBuilder(dord: Dord, name: String, description: String, isAutocomplete: Boolean): OptionBuilder {
+inline fun <reified T> OptionBuilder(
+    dord: Dord,
+    name: String,
+    description: String,
+    isAutocomplete: Boolean,
+    isRequired: Boolean
+): OptionBuilder<T> {
     val optionType = SlashOptionResolver.toOptionType<T>()
         ?: throw IllegalArgumentException("Cannot map \"${typeOf<T>()}\" to OptionType, please register a resolver")
 
-    return OptionBuilder(dord, name, description, isAutocomplete, !typeOf<T>().isMarkedNullable, optionType)
+    return OptionBuilder(typeOf<T>().withNullability(false), dord, name, description, isAutocomplete, isRequired, optionType)
 }
 
 @BuilderMarker
-class OptionBuilder @PublishedApi internal constructor(
+open class OptionBuilder<T> @PublishedApi internal constructor(
+    private val type: KType,
     override val dord: Dord,
     override var name: String,
     override var description: String,
@@ -144,18 +154,24 @@ class OptionBuilder @PublishedApi internal constructor(
     }
 
     @BuilderMarker
-    fun choice(name: String, value: String, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(dord, name, value).apply(builder)
+    fun choices(choices: Collection<T>) {
+        runBlocking {
+            this@OptionBuilder.choices += choices
+                .map { Resolvers.toChoice(requireNotNull(it), type) }
+                .map { ChoiceBuilder(dord, it.name, it.asString) }
+        }
     }
 
     @BuilderMarker
-    fun choice(name: String, value: Long, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(dord, name, value).apply(builder)
+    fun choices(vararg choices: T) {
+        choices(choices.toList())
     }
 
     @BuilderMarker
-    fun choice(name: String, value: Double, builder: ChoiceBuilder.() -> Unit = {}) {
-        choices += ChoiceBuilder(dord, name, value).apply(builder)
+    fun choice(value: T, builder: ChoiceBuilder.() -> Unit = {}) {
+        requireNotNull(value)
+        val choice = runBlocking { Resolvers.toChoice(value, type) }
+        choices += ChoiceBuilder(dord, choice.name, choice.toData(optionType)["value"]).apply(builder)
     }
 
     internal fun build() = OptionData(optionType, name, description)
