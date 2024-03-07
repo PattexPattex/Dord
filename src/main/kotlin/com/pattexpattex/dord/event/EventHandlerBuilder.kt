@@ -27,7 +27,7 @@ class EventHandlerBuilder(internal val namePrefix: String = "") {
 
     @BuilderMarker
     fun prefix(prefix: String, builder: EventHandlerBuilder.() -> Unit) {
-        val subBuilder = EventHandlerBuilder(prefix).apply(builder)
+        val subBuilder = EventHandlerBuilder(compileName(prefix)).apply(builder)
         handlers += subBuilder.handlers
         errorHandlers += subBuilder.errorHandlers
         returnHandlers += subBuilder.returnHandlers

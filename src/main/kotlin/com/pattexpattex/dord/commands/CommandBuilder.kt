@@ -13,7 +13,7 @@ class CommandBuilder(private val dord: Dord, internal val namePrefix: String = "
 
     @BuilderMarker
     fun prefix(prefix: String, builder: CommandBuilder.() -> Unit) {
-        val subBuilder = CommandBuilder(dord, prefix).apply(builder)
+        val subBuilder = CommandBuilder(dord, compileName(prefix)).apply(builder)
         commands += subBuilder.commands
     }
 
