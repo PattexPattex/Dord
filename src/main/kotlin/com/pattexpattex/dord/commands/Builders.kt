@@ -3,7 +3,6 @@ package com.pattexpattex.dord.commands
 import com.pattexpattex.dord.BuilderMarker
 import com.pattexpattex.dord.Dord
 import com.pattexpattex.dord.options.Resolvers
-import com.pattexpattex.dord.options.Resolvers.mapTypeToOptionType
 import com.pattexpattex.dord.options.types.SlashOptionResolver
 import dev.minn.jda.ktx.interactions.commands.Subcommand
 import dev.minn.jda.ktx.interactions.commands.SubcommandGroup
@@ -110,7 +109,7 @@ class SubcommandGroupBuilder(
 }
 
 inline fun <reified T> OptionBuilder(dord: Dord, name: String, description: String, isAutocomplete: Boolean): OptionBuilder {
-    val optionType = SlashOptionResolver.mapTypeToOptionType<T>()
+    val optionType = SlashOptionResolver.toOptionType<T>()
         ?: throw IllegalArgumentException("Cannot map \"${typeOf<T>()}\" to OptionType, please register a resolver")
 
     return OptionBuilder(dord, name, description, isAutocomplete, !typeOf<T>().isMarkedNullable, optionType)
