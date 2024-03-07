@@ -14,6 +14,7 @@ plugins {
     `java-library`
     `maven-publish`
     kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
     id("me.qoomon.git-versioning") version "6.4.2"
 }
 
@@ -28,6 +29,7 @@ dependencies {
     api("net.dv8tion:JDA:5.0.0-beta.20")
     api("com.github.minndevelopment:jda-ktx:78dbf82")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(kotlin("reflect"))
 
     testImplementation("org.jetbrains.kotlin:kotlin-test")
