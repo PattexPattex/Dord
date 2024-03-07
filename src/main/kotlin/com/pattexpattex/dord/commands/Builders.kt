@@ -2,15 +2,12 @@ package com.pattexpattex.dord.commands
 
 import com.pattexpattex.dord.BuilderMarker
 import com.pattexpattex.dord.Dord
-import com.pattexpattex.dord.EventHandlerFunction
 import com.pattexpattex.dord.options.Resolvers
 import com.pattexpattex.dord.options.Resolvers.mapTypeToOptionType
 import com.pattexpattex.dord.options.types.SlashOptionResolver
 import dev.minn.jda.ktx.interactions.commands.Subcommand
 import dev.minn.jda.ktx.interactions.commands.SubcommandGroup
 import net.dv8tion.jda.api.entities.channel.ChannelType
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
-import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.Command.Choice
@@ -20,64 +17,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.localization.LocalizationFunction
 import java.util.*
-import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.typeOf
-
-@BuilderMarker
-inline fun <reified T> OptionsContainer.option(
-    name: String,
-    description: String,
-    noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
-    builder: OptionBuilder.() -> Unit = {},
-) {
-    val parentName = "$parentName ${this.name}".trim()
-
-    autocomplete?.let {
-        dord.handlers {
-            prefix(parentName) {
-                autocomplete(name, handler = autocomplete)
-            }
-        }
-    }
-
-    options += OptionBuilder<T>(dord, name, description, autocomplete != null).apply(builder)
-}
-
-@BuilderMarker
-inline fun <reified T> OptionsContainer.option(
-    name: String,
-    description: String,
-    isAutocomplete: Boolean,
-    builder: OptionBuilder.() -> Unit = {},
-) {
-    options += OptionBuilder<T>(dord, name, description, isAutocomplete).apply(builder)
-}
-
-@BuilderMarker
-inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
-    name: String,
-    description: String,
-    isRequired: Boolean = true,
-    values: Collection<T> = enumValues<T>().toList(),
-    builder: OptionBuilder.() -> Unit = {}
-) {
-    Resolvers.register(Resolvers.enumResolver(values))
-    options += OptionBuilder<T>(dord, name, description, false).apply(builder).apply {
-        this.isRequired = isRequired
-        addChoices(values.map { ChoiceBuilder(dord, it.name, it.name.lowercase()) })
-    }
-}
-
-@BuilderMarker
-inline fun <reified T : GuildChannel?> OptionsContainer.channelOption(
-    name: String,
-    description: String,
-    builder: OptionBuilder.() -> Unit = {},
-) {
-    options += OptionBuilder<T>(dord, name, description, false).apply(builder).apply {
-        channelTypes += ChannelType.guildTypes().filter { T::class.isSuperclassOf(it.`interface`.kotlin) }
-    }
-}
 
 @BuilderMarker
 open class BaseCommandBuilder(
@@ -219,10 +159,6 @@ class OptionBuilder @PublishedApi internal constructor(
         choices += ChoiceBuilder(dord, name, value).apply(builder)
     }
 
-    fun addChoices(choices: Collection<ChoiceBuilder>) {
-        this.choices += choices
-    }
-
     internal fun build() = OptionData(optionType, name, description)
         .setNameLocalizations(nameLocalizations)
         .setDescriptionLocalizations(descriptionLocalizations)
@@ -243,7 +179,7 @@ class OptionBuilder @PublishedApi internal constructor(
 }
 
 @BuilderMarker
-class ChoiceBuilder(
+class ChoiceBuilder @PublishedApi internal constructor(
     override val dord: Dord,
     override var name: String,
     var value: Any,
