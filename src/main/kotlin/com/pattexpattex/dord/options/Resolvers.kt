@@ -98,7 +98,7 @@ object Resolvers {
         }
 
         if (resolvedValue == null && null !is T) {
-            throw NullPointerException("Resolved value is null")
+            throw DordResolverException("Resolved value is null", typeOf<T>())
         }
 
         if (resolvedValue !is T) {
