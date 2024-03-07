@@ -51,11 +51,11 @@ object Resolvers {
         val resolvedValue = resolvers.filter { typeOf<T>().withNullability(false).isSubtypeOf(it.resolvedType) }
             .firstNotNullOfOrNull {
                 when (pipeline.event) {
-                    is GenericComponentInteractionCreateEvent -> (it as ComponentOptionResolver<*, *>).resolve(pipeline.handler.name, pipeline.event, arg)
-                    is MessageContextInteractionEvent -> (it as MessageContextOptionResolver<*, *>).resolve(pipeline.event)
-                    is UserContextInteractionEvent -> (it as UserContextOptionResolver<*, *>).resolve(pipeline.event)
-                    is ModalInteractionEvent -> (it as ModalOptionResolver<*, *>).resolve(pipeline.event, pipeline.event.getValue(arg))
-                    is CommandInteractionPayload -> (it as SlashOptionResolver<*, *>).resolve(pipeline.event, pipeline.event.getOption(arg))
+                    is GenericComponentInteractionCreateEvent -> (it as? ComponentOptionResolver<*, *>)?.resolve(pipeline.handler.name, pipeline.event, arg)
+                    is MessageContextInteractionEvent -> (it as? MessageContextOptionResolver<*, *>)?.resolve(pipeline.event)
+                    is UserContextInteractionEvent -> (it as? UserContextOptionResolver<*, *>)?.resolve(pipeline.event)
+                    is ModalInteractionEvent -> (it as? ModalOptionResolver<*, *>)?.resolve(pipeline.event, pipeline.event.getValue(arg))
+                    is CommandInteractionPayload -> (it as? SlashOptionResolver<*, *>)?.resolve(pipeline.event, pipeline.event.getOption(arg))
                     else -> (it as? GenericOptionResolver<*, *>)?.resolve(pipeline, arg)
                 }
             }
