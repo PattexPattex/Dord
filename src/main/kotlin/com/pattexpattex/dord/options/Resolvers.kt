@@ -35,13 +35,13 @@ object Resolvers {
         UserResolver()
     ).toCollection(CopyOnWriteArraySet())
 
-    fun register(resolver: OptionResolver<*, *>) {
+    fun <T : OptionResolver<T, R>, R : Any> register(resolver: T) {
         resolvers.add(resolver)
     }
 
-    inline fun <reified E : Enum<E>> enumResolver(
-        values: Collection<E> = enumValues<E>().toList()
-    ): OptionResolver<EnumResolver<E>, E> = EnumResolver(typeOf<E>(), values.toCollection(EnumSet.noneOf(E::class.java)))
+    inline fun <reified T : Enum<T>> enumResolver(values: Collection<T> = enumValues<T>().toList()): EnumResolver<T> {
+        return EnumResolver(typeOf<T>(), values.toCollection(EnumSet.noneOf(T::class.java)))
+    }
 
     @PublishedApi
     internal suspend inline fun <reified T : Any?, E : GenericEvent> resolve(
