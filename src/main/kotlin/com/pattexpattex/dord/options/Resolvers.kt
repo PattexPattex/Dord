@@ -38,8 +38,12 @@ object Resolvers {
         UserResolver()
     ).toCollection(CopyOnWriteArraySet())
 
-    fun <T : OptionResolver<T, R>, R : Any> register(resolver: T) {
+    fun register(resolver: OptionResolver<*, *>) {
         resolvers.add(resolver)
+    }
+
+    fun register(resolvers: Collection<OptionResolver<*, *>>) {
+        this.resolvers.addAll(resolvers)
     }
 
     inline fun <reified T : Enum<T>> enumResolver(values: Collection<T> = enumValues<T>().toList()): EnumResolver<T> {
