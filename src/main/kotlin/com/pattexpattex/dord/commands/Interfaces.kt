@@ -12,6 +12,7 @@ sealed interface DordContainer {
 sealed interface OptionsContainer : DordContainer {
     var options: MutableList<OptionBuilder>
     val name: String
+    val parentName: String
 
     fun addOptions(options: Collection<OptionBuilder>) {
         this.options += options
@@ -22,10 +23,11 @@ sealed interface OptionsContainer : DordContainer {
 sealed interface SubcommandsContainer : DordContainer {
     var subcommands: MutableList<SubcommandBuilder>
     val name: String
+    val parentName: String
 
     @BuilderMarker
     fun subcommand(name: String, description: String, builder: SubcommandBuilder.() -> Unit = {}) {
-        subcommands += SubcommandBuilder(dord, name, description).apply(builder)
+        subcommands += SubcommandBuilder(dord, "$parentName ${this.name}".trim(), name, description).apply(builder)
     }
 
     fun addSubcommands(subcommands: Collection<SubcommandBuilder>) {
@@ -37,10 +39,11 @@ sealed interface SubcommandsContainer : DordContainer {
 sealed interface SubcommandGroupsContainer : DordContainer {
     var subcommandGroups: MutableList<SubcommandGroupBuilder>
     val name: String
+    val parentName: String
 
     @BuilderMarker
     fun group(name: String, description: String, builder: SubcommandGroupBuilder.() -> Unit) {
-        subcommandGroups += SubcommandGroupBuilder(dord, name, description).apply(builder)
+        subcommandGroups += SubcommandGroupBuilder(dord, "$parentName ${this.name}".trim(), name, description).apply(builder)
     }
 }
 

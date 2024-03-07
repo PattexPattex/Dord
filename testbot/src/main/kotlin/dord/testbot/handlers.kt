@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.commands.Command
 
 fun Dord.setupHandlers() = handlers {
-    prefix("foo") {
+    prefix("foo stink") {
         slash {
             event.reply("${option<Int>("bornana")} bornana ${option<String?>("bleh")}")
         }

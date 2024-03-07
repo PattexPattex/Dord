@@ -30,9 +30,11 @@ inline fun <reified T> OptionsContainer.option(
     noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
     builder: OptionBuilder.() -> Unit = {},
 ) {
+    val parentName = "$parentName ${this.name}".trim()
+
     autocomplete?.let {
         dord.handlers {
-            prefix(this@option.name) {
+            prefix(parentName) {
                 autocomplete(name, handler = autocomplete)
             }
         }
@@ -119,6 +121,7 @@ class SlashCommandBuilder(
     override var descriptionLocalizations = mutableMapOf<DiscordLocale, String>()
     override var subcommands = mutableListOf<SubcommandBuilder>()
     override var subcommandGroups = mutableListOf<SubcommandGroupBuilder>()
+    override val parentName = ""
 
     override fun build() = Commands.slash(name, description)
         .setDescriptionLocalizations(descriptionLocalizations)
@@ -135,6 +138,7 @@ class SlashCommandBuilder(
 @BuilderMarker
 class SubcommandBuilder(
     override val dord: Dord,
+    override val parentName: String,
     override var name: String,
     override var description: String
 ) : OptionsContainer, LocalizationsContainer {
@@ -151,6 +155,7 @@ class SubcommandBuilder(
 @BuilderMarker
 class SubcommandGroupBuilder(
     override val dord: Dord,
+    override val parentName: String,
     override var name: String,
     override var description: String,
 ) : SubcommandsContainer, LocalizationsContainer {
