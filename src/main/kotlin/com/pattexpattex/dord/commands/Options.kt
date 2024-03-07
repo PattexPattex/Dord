@@ -42,6 +42,32 @@ inline fun <reified T> OptionsContainer.option(
 }
 
 @BuilderMarker
+inline fun <reified T : Any> OptionsContainer.serializableOption(
+    name: String,
+    description: String,
+    isRequired: Boolean = true,
+    serializer: KSerializer<T> = serializer(),
+    noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
+    builder: OptionBuilder<T>.() -> Unit = {},
+) = serializableOption(name, description, autocomplete != null, isRequired, serializer, builder)
+
+@BuilderMarker
+inline fun <reified T : Any> OptionsContainer.serializableOption(
+    name: String,
+    description: String,
+    isAutocomplete: Boolean,
+    isRequired: Boolean = true,
+    serializer: KSerializer<T> = serializer(),
+    builder: OptionBuilder<T>.() -> Unit = {},
+) {
+    if (!Resolvers.isRegistered<T>()) {
+        Resolvers.register(Resolvers.serializableResolver<T>(serializer))
+    }
+
+    option<T>(name, description, isAutocomplete, isRequired, builder)
+}
+
+@BuilderMarker
 inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
     name: String,
     description: String,

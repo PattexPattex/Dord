@@ -3,6 +3,8 @@ package com.pattexpattex.dord.options
 import com.pattexpattex.dord.event.EventPipeline
 import com.pattexpattex.dord.options.impl.*
 import com.pattexpattex.dord.options.types.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.serializer
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent
@@ -43,6 +45,16 @@ object Resolvers {
     inline fun <reified T : Enum<T>> enumResolver(values: Collection<T> = enumValues<T>().toList()): EnumResolver<T> {
         return EnumResolver(typeOf<T>(), values.toCollection(EnumSet.noneOf(T::class.java)))
     }
+
+    inline fun <reified T : Any> serializableResolver(serializer: KSerializer<T> = serializer()): SerializableResolver<T> {
+        return SerializableResolver(serializer, typeOf<T>())
+    }
+
+    inline fun <reified T> isRegistered(): Boolean {
+        return resolvers.any { typeOf<T>().withNullability(false).isSubtypeOf(it.resolvedType) }
+    }
+
+    suspend inline fun <reified T : Any> serialize(value: T) = toChoice(value, typeOf<T>()).asString
 
     suspend inline fun <reified T : Any> toChoice(value: T) = toChoice(value, typeOf<T>())
 

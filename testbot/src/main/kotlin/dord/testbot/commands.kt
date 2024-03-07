@@ -2,6 +2,7 @@ package dord.testbot
 
 import com.pattexpattex.dord.Dord
 import com.pattexpattex.dord.commands.option
+import com.pattexpattex.dord.commands.serializableOption
 import net.dv8tion.jda.api.interactions.commands.Command
 
 fun Dord.setupNewCommands() = commands {
@@ -15,6 +16,10 @@ fun Dord.setupNewCommands() = commands {
             }
         }
     }
+
+    slash("resovertest", "yeaaaa") {
+        serializableOption<CustomResolvedThing>("thing", "adad") {
+            choices(CustomResolvedThing(Foo.Yes, false), CustomResolvedThing(Foo.No, true))
         }
     }
 }
