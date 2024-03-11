@@ -98,11 +98,11 @@ object Resolvers {
         }
 
         if (resolvedValue == null && null !is T) {
-            throw DordResolverException("Resolved value is null", typeOf<T>())
+            throw DordResolverException("Resolved value \"$arg\" is null", arg, typeOf<T>())
         }
 
         if (resolvedValue !is T) {
-            throw IllegalStateException("Resolved value \"$resolvedValue\" is not of type ${typeOf<T>()}")
+            throw IllegalStateException("Resolved value \"$resolvedValue\" (named $arg) is not of type ${typeOf<T>()}")
         }
 
         return resolvedValue
