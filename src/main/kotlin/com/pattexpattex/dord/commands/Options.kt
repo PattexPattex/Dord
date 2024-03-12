@@ -49,7 +49,13 @@ inline fun <reified T : Any> OptionsContainer.serializableOption(
     serializer: KSerializer<T> = serializer(),
     noinline autocomplete: EventHandlerFunction<CommandAutoCompleteInteractionEvent, Unit>? = null,
     builder: OptionBuilder<T>.() -> Unit = {},
-) = serializableOption(name, description, autocomplete != null, isRequired, serializer, builder)
+) {
+    if (!Resolvers.isRegistered<T>()) {
+        Resolvers.register(Resolvers.serializableResolver<T>(serializer))
+    }
+
+    option<T>(name, description, isRequired, autocomplete, builder)
+}
 
 @BuilderMarker
 inline fun <reified T : Any> OptionsContainer.serializableOption(

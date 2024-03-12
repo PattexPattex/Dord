@@ -112,7 +112,7 @@ object Resolvers {
         }
 
         if (result.isFailure) {
-            throw DordResolverException("Resolver for \"$arg\": $type threw an exception", arg, type, result.exceptionOrNull()!!)
+            throw DordResolverException("Resolver for $arg: $type threw an exception", arg, type, result.exceptionOrNull()!!)
         }
 
         val resolvedValue = result.getOrNull()
@@ -122,7 +122,7 @@ object Resolvers {
         }
 
         if (resolvedValue == null && null !is T) {
-            throw DordResolvedValueException("Resolved value \"$arg\" is null", arg, type)
+            throw DordResolvedValueException("Resolved value $arg is null", arg, type)
         }
 
         if (resolvedValue !is T) {
