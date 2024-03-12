@@ -81,28 +81,52 @@ object Resolvers {
         pipeline: EventPipeline<E>,
         arg: String,
     ): T {
-        val resolvedValue = resolvers.filter { typeOf<T>().withNullability(false).isSubtypeOf(it.resolvedType) }
-            .firstNotNullOfOrNull {
-                when (pipeline.event) {
-                    is GenericComponentInteractionCreateEvent -> (it as? ComponentOptionResolver<*, *>)?.resolve(pipeline.handler.name, pipeline.event, arg)
-                    is MessageContextInteractionEvent -> (it as? MessageContextOptionResolver<*, *>)?.resolve(pipeline.event)
-                    is UserContextInteractionEvent -> (it as? UserContextOptionResolver<*, *>)?.resolve(pipeline.event)
-                    is ModalInteractionEvent -> (it as? ModalOptionResolver<*, *>)?.resolve(pipeline.event, pipeline.event.getValue(arg))
-                    is CommandInteractionPayload -> (it as? SlashOptionResolver<*, *>)?.resolve(pipeline.event, pipeline.event.getOption(arg))
-                    else -> (it as? GenericOptionResolver<*, *>)?.resolve(pipeline, arg)
+        val type = typeOf<T>()
+        val result = runCatching {
+            resolvers.filter { type.withNullability(false).isSubtypeOf(it.resolvedType) }
+                .firstNotNullOfOrNull {
+                    when (pipeline.event) {
+                        is GenericComponentInteractionCreateEvent -> (it as? ComponentOptionResolver<*, *>)?.resolve(
+                            pipeline.handler.name,
+                            pipeline.event,
+                            arg
+                        )
+
+                        is MessageContextInteractionEvent -> (it as? MessageContextOptionResolver<*, *>)?.resolve(pipeline.event)
+
+                        is UserContextInteractionEvent -> (it as? UserContextOptionResolver<*, *>)?.resolve(pipeline.event)
+
+                        is ModalInteractionEvent -> (it as? ModalOptionResolver<*, *>)?.resolve(
+                            pipeline.event,
+                            pipeline.event.getValue(arg)
+                        )
+
+                        is CommandInteractionPayload -> (it as? SlashOptionResolver<*, *>)?.resolve(
+                            pipeline.event,
+                            pipeline.event.getOption(arg)
+                        )
+
+                        else -> (it as? GenericOptionResolver<*, *>)?.resolve(pipeline, arg)
+                    } 
                 }
-            }
+        }
+
+        if (result.isFailure) {
+            throw DordResolverException("Resolver for \"$arg\": $type threw an exception", arg, type, result.exceptionOrNull()!!)
+        }
+
+        val resolvedValue = result.getOrNull()
 
         if (null is T && resolvedValue !is T) {
             return null as T
         }
 
         if (resolvedValue == null && null !is T) {
-            throw DordResolverException("Resolved value \"$arg\" is null", arg, typeOf<T>())
+            throw DordResolvedValueException("Resolved value \"$arg\" is null", arg, type)
         }
 
         if (resolvedValue !is T) {
-            throw IllegalStateException("Resolved value \"$resolvedValue\" (named $arg) is not of type ${typeOf<T>()}")
+            throw DordResolvedValueException("Resolved value \"$resolvedValue\" (named $arg) is not of type $type", arg, type)
         }
 
         return resolvedValue
