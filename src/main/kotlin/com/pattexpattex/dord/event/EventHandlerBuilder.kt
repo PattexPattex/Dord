@@ -5,6 +5,7 @@ import com.pattexpattex.dord.EventHandlerFunction
 import com.pattexpattex.dord.FilterFunction
 import com.pattexpattex.dord.options.types.ComponentOptionResolver
 import net.dv8tion.jda.api.events.GenericEvent
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -130,6 +131,13 @@ class EventHandlerBuilder(internal val namePrefix: String = "") {
         name: String = "",
         filter: (StringSelectInteractionEvent) -> Boolean = { true },
         handler: EventHandlerFunction<StringSelectInteractionEvent, Unit>
+    ) = componentHandler(name, filter, handler)
+
+    @BuilderMarker
+    fun modal(
+        name: String = "",
+        filter: (ModalInteractionEvent) -> Boolean = { true },
+        handler: EventHandlerFunction<ModalInteractionEvent, Unit>
     ) = componentHandler(name, filter, handler)
 
     private inline fun <reified T> componentHandler(
