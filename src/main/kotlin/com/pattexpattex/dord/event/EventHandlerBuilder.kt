@@ -138,7 +138,13 @@ class EventHandlerBuilder(internal val namePrefix: String = "") {
         name: String = "",
         filter: (ModalInteractionEvent) -> Boolean = { true },
         handler: EventHandlerFunction<ModalInteractionEvent, Unit>
-    ) = componentHandler(name, filter, handler)
+    ) {
+        val prefixedName = compileName(name)
+
+        handlers += baseBuilder(prefixedName, handler) { it, _ ->
+            ComponentOptionResolver.handlerPatternToRegex(prefixedName).matches(it.modalId) && filter(it)
+        }
+    }
 
     private inline fun <reified T> componentHandler(
         name: String,

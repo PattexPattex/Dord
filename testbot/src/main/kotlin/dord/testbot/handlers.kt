@@ -1,18 +1,18 @@
 package dord.testbot
 
 import com.pattexpattex.dord.Dord
-import com.pattexpattex.dord.options.Resolvers
-import dev.minn.jda.ktx.messages.MessageCreate
-import dev.minn.jda.ktx.messages.into
+import dev.minn.jda.ktx.interactions.components.Modal
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.interactions.commands.Command
-import dev.minn.jda.ktx.interactions.components.button as buttonKTX
 
 fun Dord.setupHandlers() = handlers {
     prefix("foo stink") {
         slash {
-            event.reply("${option<Int>("bornana")} bornana ${option<String?>("bleh")}")
+            val bleh = option<String?>("bleh")
+            event.replyModal(Modal("modal", "bleeeee") {
+                short("bah", bleh ?: "idk")
+            })
         }
 
         autocomplete("bleh") {
@@ -26,14 +26,8 @@ fun Dord.setupHandlers() = handlers {
         }
     }
 
-    slash("resovertest") {
-        val thing = option<CustomResolvedThing>("thing")
-
-        val rawOption = event.getOption("thing")!!.asString
-
-        event.reply(MessageCreate("${thing.foo} was ${thing.bornana}") {
-            components += buttonKTX("dord.resovertest.${Resolvers.serialize(thing)}", rawOption).into()
-        })
+    modal("modal") {
+        event.reply(option<String>("bah"))
     }
 
     button("dord.resovertest.{thing}") {
