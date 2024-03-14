@@ -103,35 +103,18 @@ class EventHandlerBuilder(internal val namePrefix: String = "") {
         name: String = "",
         filter: (UserContextInteractionEvent) -> Boolean = { true },
         handler: EventHandlerFunction<UserContextInteractionEvent, Unit>
-    ) = componentHandler(name, filter, handler)
+    ) {
+        handlers += baseBuilder(compileName(name), handler) { event, _ -> filter(event) }
+    }
 
     @BuilderMarker
     fun messageContext(
         name: String = "",
         filter: (MessageContextInteractionEvent) -> Boolean = { true },
         handler: EventHandlerFunction<MessageContextInteractionEvent, Unit>
-    ) = componentHandler(name, filter, handler)
-
-    @BuilderMarker
-    fun button(
-        name: String = "",
-        filter: (ButtonInteractionEvent) -> Boolean = { true },
-        handler: EventHandlerFunction<ButtonInteractionEvent, Unit>,
-    ) = componentHandler(name, filter, handler)
-
-    @BuilderMarker
-    fun entitySelectMenu(
-        name: String = "",
-        filter: (EntitySelectInteractionEvent) -> Boolean = { true },
-        handler: EventHandlerFunction<EntitySelectInteractionEvent, Unit>
-    ) = componentHandler(name, filter, handler)
-
-    @BuilderMarker
-    fun stringSelectMenu(
-        name: String = "",
-        filter: (StringSelectInteractionEvent) -> Boolean = { true },
-        handler: EventHandlerFunction<StringSelectInteractionEvent, Unit>
-    ) = componentHandler(name, filter, handler)
+    ) {
+        handlers += baseBuilder(compileName(name), handler) { event, _ -> filter(event) }
+    }
 
     @BuilderMarker
     fun modal(
@@ -145,6 +128,27 @@ class EventHandlerBuilder(internal val namePrefix: String = "") {
             ComponentOptionResolver.handlerPatternToRegex(prefixedName).matches(it.modalId) && filter(it)
         }
     }
+
+    @BuilderMarker
+    fun button(
+        name: String = "",
+        filter: (ButtonInteractionEvent) -> Boolean = { true },
+        handler: EventHandlerFunction<ButtonInteractionEvent, Unit>,
+    ) = componentHandler<ButtonInteractionEvent>(name, filter, handler)
+
+    @BuilderMarker
+    fun entitySelectMenu(
+        name: String = "",
+        filter: (EntitySelectInteractionEvent) -> Boolean = { true },
+        handler: EventHandlerFunction<EntitySelectInteractionEvent, Unit>
+    ) = componentHandler<EntitySelectInteractionEvent>(name, filter, handler)
+
+    @BuilderMarker
+    fun stringSelectMenu(
+        name: String = "",
+        filter: (StringSelectInteractionEvent) -> Boolean = { true },
+        handler: EventHandlerFunction<StringSelectInteractionEvent, Unit>
+    ) = componentHandler<StringSelectInteractionEvent>(name, filter, handler)
 
     private inline fun <reified T> componentHandler(
         name: String,
