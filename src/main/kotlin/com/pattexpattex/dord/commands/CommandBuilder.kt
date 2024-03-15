@@ -40,4 +40,6 @@ class CommandBuilder(private val dord: Dord, internal val namePrefix: String = "
 
     @BuilderMarker
     fun message(builder: BaseCommandBuilder.() -> Unit = {}) = message("", builder)
+
+    fun build() = commands.map { it.build() }
 }
