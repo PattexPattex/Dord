@@ -171,9 +171,7 @@ open class OptionBuilder<T> @PublishedApi internal constructor(
     @BuilderMarker
     fun choices(choices: Collection<T>) {
         runBlocking {
-            this@OptionBuilder.choices += choices
-                .map { Resolvers.toChoice(requireNotNull(it), type) }
-                .map { ChoiceBuilder(dord, it.name, it.asString) }
+            choices(choices.map { Resolvers.toChoice(requireNotNull(it), type) })
         }
     }
 
@@ -184,9 +182,9 @@ open class OptionBuilder<T> @PublishedApi internal constructor(
 
     @BuilderMarker
     fun choice(value: T, builder: ChoiceBuilder.() -> Unit = {}) {
-        requireNotNull(value)
-        val choice = runBlocking { Resolvers.toChoice(value, type) }
-        choices += ChoiceBuilder(dord, choice.name, choice.toData(optionType)["value"]).apply(builder)
+        runBlocking {
+            choice(Resolvers.toChoice(requireNotNull(value), type), builder)
+        }
     }
 
     internal fun build() = OptionData(optionType, name, description)
