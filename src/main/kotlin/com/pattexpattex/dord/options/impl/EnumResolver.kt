@@ -1,9 +1,11 @@
 package com.pattexpattex.dord.options.impl
 
 import com.pattexpattex.dord.options.OptionResolver
+import com.pattexpattex.dord.options.types.ChoiceMapper
 import com.pattexpattex.dord.options.types.ComponentOptionResolver
 import com.pattexpattex.dord.options.types.SlashOptionResolver
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
+import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.CommandInteractionPayload
 import net.dv8tion.jda.api.interactions.commands.OptionMapping
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -12,7 +14,8 @@ import kotlin.reflect.KType
 class EnumResolver<E : Enum<E>>(private val type: KType, private val enumValues: Collection<E>) :
     OptionResolver<EnumResolver<E>, E>(type),
     SlashOptionResolver<EnumResolver<E>, E>,
-    ComponentOptionResolver<EnumResolver<E>, E> {
+    ComponentOptionResolver<EnumResolver<E>, E>,
+    ChoiceMapper<EnumResolver<E>, E> {
     override val optionType = OptionType.STRING
 
     override suspend fun resolve(
@@ -23,6 +26,8 @@ class EnumResolver<E : Enum<E>>(private val type: KType, private val enumValues:
 
     override suspend fun resolve(event: CommandInteractionPayload, optionMapping: OptionMapping?) =
         optionMapping?.asString?.let(::getEnumValue)
+
+    override suspend fun toChoice(value: E) = Command.Choice(value.name, value.name.lowercase())
 
     private val map = enumValues.associateBy { it.name.lowercase() }
 

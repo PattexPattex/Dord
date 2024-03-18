@@ -85,7 +85,7 @@ inline fun <reified T : Enum<T>> OptionsContainer.enumOption(
 
     option<T>(name, description, isRequired = isRequired) {
         builder()
-        choices += values.map { ChoiceBuilder(dord, it.name, it.name.lowercase()) }
+        choices(values)
     }
 }
 
