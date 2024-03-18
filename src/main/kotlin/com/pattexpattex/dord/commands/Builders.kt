@@ -168,6 +168,7 @@ open class OptionBuilder<T> @PublishedApi internal constructor(
         choices += ChoiceBuilder(dord, choice.name, choice.toData(optionType).get("value")).apply(builder)
     }
 
+    @JvmName("choicesTyped")
     @BuilderMarker
     fun choices(choices: Collection<T>) {
         runBlocking {
