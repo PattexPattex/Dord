@@ -154,6 +154,21 @@ open class OptionBuilder<T> @PublishedApi internal constructor(
     }
 
     @BuilderMarker
+    fun choices(choices: Collection<Choice>) {
+        this.choices += choices.map { ChoiceBuilder(dord, it.name, it.toData(optionType).get("value")) }
+    }
+
+    @BuilderMarker
+    fun choices(vararg choices: Choice) {
+        choices(choices.toList())
+    }
+
+    @BuilderMarker
+    fun choice(choice: Choice, builder: ChoiceBuilder.() -> Unit) {
+        choices += ChoiceBuilder(dord, choice.name, choice.toData(optionType).get("value")).apply(builder)
+    }
+
+    @BuilderMarker
     fun choices(choices: Collection<T>) {
         runBlocking {
             this@OptionBuilder.choices += choices
